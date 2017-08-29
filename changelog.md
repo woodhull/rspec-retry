@@ -1,8 +1,31 @@
+# 0.5.5 - 2017-08-22
+## enhancements
+added retry_callback to help with cleanup between runs (thanks @abrom / #80)
+
+# 0.5.4 - 2017-05-08
+## enhancements
+added support for rspec 3.6.0 (thanks @dthorsen / #76)
+
+# 0.5.3 - 2017-01-11
+## enhancements
+printing summary of rspec to output not STDOUT (thanks @trevorcreech / #68)
+removing some development dependencies
+
+# 0.5.2 - 2016-10-03
+## bugfixes
+supports versions > 3.5.0  (thanks @y-yagi / #65)
+
+# 0.5.1 - 2016-9-30
+## enhancements
+better failure message for multiple failures in one test (thanks @JonRowe / #62)
+
 # 0.5.0 - 2016-8-8
 drop support for rspec 3.2, added support for 3.4, 3.5
 
 # 0.4.6 - 2016-8-8
+## bugfixes
 failure message was off by 1 (thanks @anthonywoo, @vgrigoruk / #57)
+## enhancements
 add the `exceptions_to_hard_fail` options (thanks @james-dominy, @ShockwaveNN / #59)
 add retry reporter & api for accessing retry from reporter (thanks @tdeo / #54)
 

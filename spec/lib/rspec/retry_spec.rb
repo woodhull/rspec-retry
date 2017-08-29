@@ -201,4 +201,93 @@ describe RSpec::Retry do
       expect(count).to eq(3)
     end
   end
+
+  describe 'calling retry_callback between retries', retry: 2 do
+    before(:all) do
+      RSpec.configuration.retry_callback = proc do |example|
+        @retry_callback_called = true
+        @example = example
+      end
+    end
+
+    after(:all) do
+      RSpec.configuration.retry_callback = nil
+    end
+
+    context 'if failure' do
+      before(:all) do
+        @retry_callback_called = false
+        @example = nil
+        @retry_attempts = 0
+      end
+
+      it 'should call retry callback', with_some: 'metadata' do |example|
+        if @retry_attempts == 0
+          @retry_attempts += 1
+          expect(@retry_callback_called).to be(false)
+          expect(@example).to eq(nil)
+          raise "let's retry once!"
+        elsif @retry_attempts > 0
+          expect(@retry_callback_called).to be(true)
+          expect(@example).to eq(example)
+          expect(@example.metadata[:with_some]).to eq('metadata')
+        end
+      end
+    end
+
+    context 'does not call retry_callback if no errors' do
+      before(:all) do
+        @retry_callback_called = false
+        @example = nil
+      end
+
+      after do
+        expect(@retry_callback_called).to be(false)
+        expect(@example).to be_nil
+      end
+
+      it { true }
+    end
+  end
+
+  describe 'output in verbose mode' do
+
+    line_1 = __LINE__ + 8
+    line_2 = __LINE__ + 11
+    let(:group) do
+      RSpec.describe 'ExampleGroup', retry: 2 do
+        after do
+          fail 'broken after hook'
+        end
+
+        it 'passes' do
+          true
+        end
+
+        it 'fails' do
+          fail 'broken spec'
+        end
+      end
+    end
+
+    it 'outputs failures correctly' do
+      RSpec.configuration.output_stream = output = StringIO.new
+      RSpec.configuration.verbose_retry = true
+      RSpec.configuration.display_try_failure_messages = true
+      expect {
+        group.run RSpec.configuration.reporter
+      }.to change { output.string }.to a_string_including <<-STRING.gsub(/^\s+\| ?/, '')
+        | 1st Try error in ./spec/lib/rspec/retry_spec.rb:#{line_1}:
+        | broken after hook
+        |
+        | RSpec::Retry: 2nd try ./spec/lib/rspec/retry_spec.rb:#{line_1}
+        | F
+        | 1st Try error in ./spec/lib/rspec/retry_spec.rb:#{line_2}:
+        | broken spec
+        | broken after hook
+        |
+        | RSpec::Retry: 2nd try ./spec/lib/rspec/retry_spec.rb:#{line_2}
+      STRING
+    end
+  end
 end

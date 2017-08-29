@@ -27,6 +27,9 @@ module RSpec
         config.add_setting :exceptions_to_retry, :default => []
         config.add_setting :retry_callback, :default => nil
 
+        # Callback between retries
+        config.add_setting :retry_callback, :default => nil
+
         config.around(:each) do |ex|
           ex.run_with_retry
         end
@@ -137,12 +140,24 @@ module RSpec
 
         if verbose_retry? && display_try_failure_messages?
           if attempts != retry_count
-            try_message = "#{ordinalize(attempts)} Try error in #{example.location}:\n #{example.exception.to_s} \n"
+            exception_strings =
+              if ::RSpec::Core::MultipleExceptionError::InterfaceTag === example.exception
+                example.exception.all_exceptions.map(&:to_s)
+              else
+                [example.exception.to_s]
+              end
+
+            try_message = "\n#{ordinalize(attempts)} Try error in #{example.location}:\n#{exception_strings.join "\n"}\n"
             RSpec.configuration.reporter.message(try_message)
           end
         end
 
         example.example_group_instance.clear_lets if clear_lets
+
+        # If the callback is defined, let's call it
+        if RSpec.configuration.retry_callback
+          example.example_group_instance.instance_exec(example, &RSpec.configuration.retry_callback)
+        end
 
         sleep sleep_interval if sleep_interval.to_i > 0
 

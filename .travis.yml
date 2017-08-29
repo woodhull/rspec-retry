@@ -2,9 +2,12 @@ language: ruby
 rvm:
   - 2.1
   - 2.2
+  - 2.3.3
+  - 2.4.0
 gemfile:
   - gemfiles/rspec_3.3.gemfile
   - gemfiles/rspec_3.4.gemfile
   - gemfiles/rspec_3.5.gemfile
+  - gemfiles/rspec_3.6.gemfile
 cache: bundler
 sudo: false
